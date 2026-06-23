@@ -2,8 +2,6 @@ import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
 
 const app = express();
 const httpServer = createServer(app);
@@ -16,17 +14,6 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
-// Robust Path-Fallback Routing Engine for Render Architecture
-const publicPath = path.join(__dirname, 'public');
-const fallbackPublicPath = path.join(__dirname, '..', 'src', 'public');
-
-if (fs.existsSync(publicPath)) {
-    app.use(express.static(publicPath));
-} else {
-    app.use(express.static(fallbackPublicPath));
-}
-
-// Precautionary Protocol engine registry
 const PRECAUTION_PROTOCOLS: Record<string, string[]> = {
     "Gastroenteritis / Diarrhea": [
         "Enforce immediate 'Boil Water Advisory' across regional micro-clusters for 1-3 minutes.",
@@ -45,7 +32,6 @@ const PRECAUTION_PROTOCOLS: Record<string, string[]> = {
     ]
 };
 
-// Complete geographic ledger for all 36 States & UTs with historical telemetry trends
 const baselineDatabase: Record<string, any> = {
     "Andhra Pradesh": { q: "Amaravati,Andhra+Pradesh", wci: 48.2, alert: false, msg: "All irrigation canals stable.", baseCases: 12, chart: [30, 32, 35, 40, 44, 45, 48] },
     "Arunachal Pradesh": { q: "Itanagar,Arunachal+Pradesh", wci: 32.5, alert: false, msg: "Mountain streams normal.", baseCases: 4, chart: [25, 28, 30, 29, 31, 33, 32] },
@@ -85,16 +71,282 @@ const baselineDatabase: Record<string, any> = {
     "Puducherry": { q: "Puducherry,India", wci: 42.7, alert: false, msg: "Groundwater sensors logging ideal salt-barrier tracking.", baseCases: 7, chart: [38, 40, 41, 43, 44, 42, 42] }
 };
 
-// Core Base Root Delivery Router
+// In-Memory UI Rendering Framework to bypass disk routing errors
+const HTML_VIEWPORT = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYDRA - Enterprise Intelligence Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen antialiased">
+    <nav class="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 px-6 py-3 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-md"><i class="fa-solid fa-shield-halved text-xl"></i></div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-mono font-black text-blue-400 uppercase tracking-widest">HYDRA DISTRIBUTED HUB</span>
+                    <span id="global-badge" class="px-2 py-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold">System Online</span>
+                </div>
+                <h1 class="text-lg font-black tracking-tight text-white">National Health & Contamination Intelligence Matrix</h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+            <span class="text-slate-400"><i class="fa-solid fa-network-wired text-blue-400 mr-2"></i>WS Feed Status:</span>
+            <span id="socket-status-dot" class="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+        </div>
+    </nav>
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 shadow-md">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-map-location-dot text-blue-500 text-xl"></i>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Geographic Jurisdiction</h3>
+                    <p class="text-[11px] text-slate-500">Query live tracking metrics across all 36 States & UTs</p>
+                </div>
+            </div>
+            <div class="w-full md:w-80">
+                <select id="stateSelector" onchange="handleStateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:ring-1 focus:ring-blue-500 focus:outline-hidden"></select>
+            </div>
+        </div>
+        <div id="precautionDisplay" class="hidden bg-slate-950 border border-emerald-500/30 rounded-xl p-5 shadow-2xl transition-all">
+            <div class="flex items-center gap-3 border-b border-emerald-500/10 pb-3 mb-4">
+                <i class="fa-solid fa-shield-virus text-emerald-400 text-xl"></i>
+                <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">Automated Precaution Protocols Loaded</h3>
+            </div>
+            <ul id="precautionList" class="space-y-2 text-xs text-slate-300 list-disc pl-5"></ul>
+            <div class="flex justify-end mt-4"><button onclick="this.parentElement.parentElement.classList.add('hidden')" class="px-3 py-1 bg-slate-800 text-slate-400 text-xs rounded hover:bg-slate-700 cursor-pointer">Dismiss Protocol</button></div>
+        </div>
+        <div id="alertBanner" class="hidden bg-gradient-to-r from-amber-950/30 to-slate-950 border-l-4 border-amber-500 rounded-r-xl p-4 flex gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg"></i>
+            <p id="alertText" class="text-xs text-slate-300 leading-relaxed"></p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase">Water Contamination Index</p>
+                <h4 id="metric-wci" class="text-2xl font-black text-rose-400 mt-2">--</h4>
+            </div>
+            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase">Reported Cases</p>
+                <h4 id="metric-cases" class="text-2xl font-black text-amber-400 mt-2">--</h4>
+            </div>
+            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase">System Status Profile</p>
+                <h4 id="metric-status" class="text-sm font-black text-emerald-400 mt-3 uppercase tracking-widest">Normal</h4>
+            </div>
+            <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                <p class="text-xs font-bold tracking-wider text-slate-400 uppercase">Live WS Tracker Packet</p>
+                <h4 id="metric-packet" class="text-xs font-mono text-blue-400 mt-3 truncate">Connecting...</h4>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                    <h3 class="font-bold text-white text-sm tracking-wide mb-4">7-Day Outbreak Prediction Modeling</h3>
+                    <div class="h-64"><canvas id="outbreakChart"></canvas></div>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xs">
+                    <h3 class="font-bold text-white text-sm tracking-wide mb-3">Google Maps GIS Vector Satellite Interface</h3>
+                    <div class="w-full h-80 rounded-lg overflow-hidden border border-slate-800 bg-slate-900">
+                        <iframe id="googleMapIframe" class="w-full h-full filter invert grayscale opacity-80" src="" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                </div>
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-xs">
+                    <h3 class="font-bold text-white text-sm tracking-wide mb-3"><i class="fa-solid fa-satellite-dish text-blue-400 mr-2 animate-pulse"></i>Live Real-Time Sentinel IoT Stream Feed</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-[10px] text-slate-500 uppercase font-black tracking-wider">
+                                    <th class="pb-2">Timestamp</th>
+                                    <th class="pb-2">Target Node Jurisdiction</th>
+                                    <th class="pb-2">Contamination WCI</th>
+                                    <th class="pb-2">Turbidity Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="streamTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl shadow-md">
+                    <h3 class="font-bold text-white text-sm tracking-wide mb-4">Transmit Incident Diagnostics</h3>
+                    <form onsubmit="submitIncident(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Target Cluster Node Name</label>
+                            <input type="text" id="formNode" required placeholder="e.g. Sector 4 Outpost" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-hidden focus:border-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Observation Variant</label>
+                                <select id="formSymptom" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-hidden focus:border-blue-500">
+                                    <option>Gastroenteritis / Diarrhea</option>
+                                    <option>Acute Typhoidal Fever</option>
+                                    <option>Jaundice / Hepatic Symptoms</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Symptomatic Count</label>
+                                <input type="number" id="formCases" required min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-hidden focus:border-blue-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 rounded-lg cursor-pointer transition-colors uppercase tracking-wider">Transmit Field Log</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        let serverDatabase = {};
+        let outbreakChart;
+        const ctx = document.getElementById('outbreakChart').getContext('2d');
+        const socket = io();
+
+        socket.on('connect', () => {
+            document.getElementById('socket-status-dot').className = "h-2 w-2 rounded-full bg-emerald-400";
+        });
+
+        socket.on('sentinel_stream_pulse', (payload) => {
+            document.getElementById('metric-packet').innerText = `Pulse: \${payload.state} -> \${payload.wci} WCI`;
+
+            const tbody = document.getElementById('streamTableBody');
+            const row = document.createElement('tr');
+            row.className = "bg-blue-950/10 border-b border-slate-800/40 transition-colors hover:bg-slate-800/30";
+            row.innerHTML = \`
+                <td class="py-2.5 font-mono text-slate-500">\${payload.timestamp}</td>
+                <td class="py-2.5 font-bold text-white">\${payload.state} <span class="text-[10px] font-normal text-slate-400">(\${payload.nodeName})</span></td>
+                <td class="py-2.5 font-mono font-bold \${payload.wci > 60 ? 'text-rose-400':'text-emerald-400'}">\${payload.wci}</td>
+                <td class="py-2.5 font-mono text-blue-400">\${payload.turbidity}</td>
+            \`;
+            tbody.insertBefore(row, tbody.firstChild);
+
+            if (tbody.rows.length > 8) tbody.removeChild(tbody.lastChild);
+
+            if(document.getElementById('stateSelector').value === payload.state) {
+                document.getElementById('metric-wci').innerText = \`\${payload.wci} / 100\`;
+            }
+        });
+
+        async function fetchTelemetryCluster() {
+            try {
+                const response = await fetch('/api/telemetry');
+                serverDatabase = await response.json();
+                
+                const selector = document.getElementById('stateSelector');
+                selector.innerHTML = "";
+                
+                Object.keys(serverDatabase).sort().forEach(state => {
+                    const opt = document.createElement('option');
+                    opt.value = state;
+                    opt.innerText = state;
+                    selector.appendChild(opt);
+                });
+
+                selector.value = "Assam";
+                initChartLayout();
+                handleStateChange();
+            } catch (err) {
+                console.error("Failure Connecting API Endpoint: ", err);
+            }
+        }
+
+        function initChartLayout() {
+            outbreakChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        { label: 'Water Risk Coefficient', data: [], borderColor: '#f43f5e', tension: 0.3, fill: false },
+                        { label: 'Clinic Influx Density', data: [], borderColor: '#f59e0b', borderDash: [4,4], tension: 0.1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                    scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }, x: { grid: { display: false }, ticks: { color: '#64748b' } } }
+                }
+            });
+        }
+
+        function handleStateChange() {
+            const state = document.getElementById('stateSelector').value;
+            const record = serverDatabase[state];
+            if (!record) return;
+
+            document.getElementById('metric-wci').innerText = \`\${record.wci} / 100\`;
+            document.getElementById('metric-cases').innerText = record.baseCases;
+            
+            document.getElementById('googleMapIframe').src = \`https://maps.google.com/maps?q=\${record.q}&t=k&z=10&ie=UTF8&iwloc=&output=embed\`;
+
+            const alertBanner = document.getElementById('alertBanner');
+            const statusMetric = document.getElementById('metric-status');
+            const globalBadge = document.getElementById('global-badge');
+
+            if(record.alert) {
+                alertBanner.classList.remove('hidden');
+                document.getElementById('alertText').innerText = record.msg;
+                statusMetric.innerText = "CRITICAL LIMIT DETECTED";
+                statusMetric.className = "text-sm font-black text-rose-400 mt-3 uppercase tracking-widest";
+                globalBadge.className = "px-2 py-0.5 text-[10px] bg-rose-500/10 text-rose-400 rounded border border-rose-500/20 font-bold animate-pulse";
+                globalBadge.innerText = "Incident Event Matrix Flagged";
+            } else {
+                alertBanner.classList.add('hidden');
+                statusMetric.innerText = "NOMINAL RANGE OPERATIONAL";
+                statusMetric.className = "text-sm font-black text-emerald-400 mt-3 uppercase tracking-widest";
+                globalBadge.className = "px-2 py-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-bold";
+                globalBadge.innerText = "System Online";
+            }
+
+            outbreakChart.data.datasets[0].data = record.chart;
+            outbreakChart.data.datasets[1].data = [4, 10, 15, 22, 38, 55, record.baseCases];
+            outbreakChart.update();
+        }
+
+        async function submitIncident(event) {
+            event.preventDefault();
+            const payload = {
+                node: document.getElementById('formNode').value,
+                symptom: document.getElementById('formSymptom').value,
+                cases: document.getElementById('formCases').value
+            };
+
+            try {
+                const response = await fetch('/api/incident', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const listContainer = document.getElementById('precautionList');
+                listContainer.innerHTML = "";
+                result.instructions.forEach(inst => {
+                    listContainer.innerHTML += \`<li>\${inst}</li>\`;
+                });
+
+                document.getElementById('precautionDisplay').classList.remove('hidden');
+                document.getElementById('precautionDisplay').scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                console.error("Transmission Error: ", err);
+            }
+        }
+
+        window.onload = fetchTelemetryCluster;
+    </script>
+</body>
+</html>
+`;
+
+// Catch-all server index route directly serving the embedded webpage string
 app.get('/', (req: Request, res: Response) => {
-    const indexPath = path.join(publicPath, 'index.html');
-    const fallbackIndexPath = path.join(fallbackPublicPath, 'index.html');
-    
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.sendFile(fallbackIndexPath);
-    }
+    res.setHeader('Content-Type', 'text/html');
+    res.send(HTML_VIEWPORT);
 });
 
 app.get('/api/telemetry', (req: Request, res: Response) => {
@@ -104,7 +356,7 @@ app.get('/api/telemetry', (req: Request, res: Response) => {
 app.post('/api/incident', (req: Request, res: Response) => {
     const { symptom, node, cases } = req.body;
     if (!symptom || !node) {
-        return res.status(400).json({ error: "Missing tracking variables." });
+        return res.status(400).json({ error: "Missing parameters." });
     }
     res.json({
         success: true,
@@ -112,11 +364,10 @@ app.post('/api/incident', (req: Request, res: Response) => {
         node,
         symptom,
         cases,
-        instructions: PRECAUTION_PROTOCOLS[symptom] || ["Standard purification protocol initialization advised."]
+        instructions: PRECAUTION_PROTOCOLS[symptom] || ["Standard purification protocol active."]
     });
 });
 
-// Real-time streaming loop
 setInterval(() => {
     const states = Object.keys(baselineDatabase);
     const selectedState = states[Math.floor(Math.random() * states.length)];
