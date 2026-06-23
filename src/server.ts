@@ -3,18 +3,30 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 
 const app = express();
 const httpServer = createServer(app);
 
+// Enterprise WebSocket Integration
 const io = new Server(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
+// Robust Path-Fallback Routing Engine for Render Architecture
+const publicPath = path.join(__dirname, 'public');
+const fallbackPublicPath = path.join(__dirname, '..', 'src', 'public');
+
+if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+} else {
+    app.use(express.static(fallbackPublicPath));
+}
+
+// Precautionary Protocol engine registry
 const PRECAUTION_PROTOCOLS: Record<string, string[]> = {
     "Gastroenteritis / Diarrhea": [
         "Enforce immediate 'Boil Water Advisory' across regional micro-clusters for 1-3 minutes.",
@@ -33,6 +45,7 @@ const PRECAUTION_PROTOCOLS: Record<string, string[]> = {
     ]
 };
 
+// Complete geographic ledger for all 36 States & UTs with historical telemetry trends
 const baselineDatabase: Record<string, any> = {
     "Andhra Pradesh": { q: "Amaravati,Andhra+Pradesh", wci: 48.2, alert: false, msg: "All irrigation canals stable.", baseCases: 12, chart: [30, 32, 35, 40, 44, 45, 48] },
     "Arunachal Pradesh": { q: "Itanagar,Arunachal+Pradesh", wci: 32.5, alert: false, msg: "Mountain streams normal.", baseCases: 4, chart: [25, 28, 30, 29, 31, 33, 32] },
@@ -72,6 +85,18 @@ const baselineDatabase: Record<string, any> = {
     "Puducherry": { q: "Puducherry,India", wci: 42.7, alert: false, msg: "Groundwater sensors logging ideal salt-barrier tracking.", baseCases: 7, chart: [38, 40, 41, 43, 44, 42, 42] }
 };
 
+// Core Base Root Delivery Router
+app.get('/', (req: Request, res: Response) => {
+    const indexPath = path.join(publicPath, 'index.html');
+    const fallbackIndexPath = path.join(fallbackPublicPath, 'index.html');
+    
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.sendFile(fallbackIndexPath);
+    }
+});
+
 app.get('/api/telemetry', (req: Request, res: Response) => {
     res.json(baselineDatabase);
 });
@@ -91,6 +116,7 @@ app.post('/api/incident', (req: Request, res: Response) => {
     });
 });
 
+// Real-time streaming loop
 setInterval(() => {
     const states = Object.keys(baselineDatabase);
     const selectedState = states[Math.floor(Math.random() * states.length)];
