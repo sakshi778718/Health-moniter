@@ -1,4 +1,4 @@
-   import express, { Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -6,7 +6,6 @@ import cors from 'cors';
 const app = express();
 const httpServer = createServer(app);
 
-// Enterprise WebSocket Integration
 const io = new Server(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] }
 });
@@ -71,7 +70,6 @@ const baselineDatabase: Record<string, any> = {
     "Puducherry": { q: "Puducherry,India", wci: 42.7, alert: false, msg: "Groundwater sensors logging ideal salt-barrier tracking.", baseCases: 7, chart: [38, 40, 41, 43, 44, 42, 42] }
 };
 
-// In-Memory UI Rendering Framework to bypass disk routing errors
 const HTML_VIEWPORT = `
 <!DOCTYPE html>
 <html lang="en">
@@ -207,22 +205,24 @@ const HTML_VIEWPORT = `
         const ctx = document.getElementById('outbreakChart').getContext('2d');
         const socket = io();
 
-        socket.on('connect', () => {
+        socket.on('connect', function() {
             document.getElementById('socket-status-dot').className = "h-2 w-2 rounded-full bg-emerald-400";
         });
 
-        socket.on('sentinel_stream_pulse', (payload) => {
+        socket.on('sentinel_stream_pulse', function(payload) {
             document.getElementById('metric-packet').innerText = "Pulse: " + payload.state + " -> " + payload.wci + " WCI";
 
             const tbody = document.getElementById('streamTableBody');
             const row = document.createElement('tr');
             row.className = "bg-blue-950/10 border-b border-slate-800/40 transition-colors hover:bg-slate-800/30";
-            row.innerHTML = ' +
-                '<td class="py-2.5 font-mono text-slate-500">' + payload.timestamp + '</td>' +
-                '<td class="py-2.5 font-bold text-white">' + payload.state + ' <span class="text-[10px] font-normal text-slate-400">(' + payload.nodeName + ')</span></td>' +
-                '<td class="py-2.5 font-mono font-bold ' + (payload.wci > 60 ? 'text-rose-400':'text-emerald-400') + '">' + payload.wci + '</td>' +
-                '<td class="py-2.5 font-mono text-blue-400">' + payload.turbidity + '</td>' +
-            '';
+            
+            const cell1 = '<td class="py-2.5 font-mono text-slate-500">' + payload.timestamp + '</td>';
+            const cell2 = '<td class="py-2.5 font-bold text-white">' + payload.state + ' <span class="text-[10px] font-normal text-slate-400">(' + payload.nodeName + ')</span></td>';
+            const targetColor = payload.wci > 60 ? 'text-rose-400' : 'text-emerald-400';
+            const cell3 = '<td class="py-2.5 font-mono font-bold ' + targetColor + '">' + payload.wci + '</td>';
+            const cell4 = '<td class="py-2.5 font-mono text-blue-400">' + payload.turbidity + '</td>';
+            
+            row.innerHTML = cell1 + cell2 + cell3 + cell4;
             tbody.insertBefore(row, tbody.firstChild);
 
             if (tbody.rows.length > 8) tbody.removeChild(tbody.lastChild);
@@ -238,9 +238,9 @@ const HTML_VIEWPORT = `
                 serverDatabase = await response.json();
                 
                 const selector = document.getElementById('stateSelector');
-                selector.innerHTML = "";
+                selector.innerHTML = '';
                 
-                Object.keys(serverDatabase).sort().forEach(state => {
+                Object.keys(serverDatabase).sort().forEach(function(state) {
                     const opt = document.createElement('option');
                     opt.value = state;
                     opt.innerText = state;
@@ -282,7 +282,7 @@ const HTML_VIEWPORT = `
             document.getElementById('metric-wci').innerText = record.wci + " / 100";
             document.getElementById('metric-cases').innerText = record.baseCases;
             
-            document.getElementById('googleMapIframe').src = "http://googleusercontent.com/maps.google.com/maps?q=" + record.q + "&t=k&z=10&ie=UTF8&iwloc=&output=embed";
+            document.getElementById('googleMapIframe').src = "https://maps.google.com/maps?q=" + record.q + "&t=k&z=10&ie=UTF8&iwloc=&output=embed";
 
             const alertBanner = document.getElementById('alertBanner');
             const statusMetric = document.getElementById('metric-status');
@@ -326,7 +326,7 @@ const HTML_VIEWPORT = `
 
                 const listContainer = document.getElementById('precautionList');
                 listContainer.innerHTML = "";
-                result.instructions.forEach(inst => {
+                result.instructions.forEach(function(inst) {
                     const li = document.createElement('li');
                     li.innerText = inst;
                     listContainer.appendChild(li);
@@ -345,7 +345,6 @@ const HTML_VIEWPORT = `
 </html>
 `;
 
-// Catch-all server index route directly serving the embedded webpage string
 app.get('/', (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'text/html');
     res.send(HTML_VIEWPORT);
