@@ -212,23 +212,23 @@ const HTML_VIEWPORT = `
         });
 
         socket.on('sentinel_stream_pulse', (payload) => {
-            document.getElementById('metric-packet').innerText = `Pulse: \${payload.state} -> \${payload.wci} WCI`;
+            document.getElementById('metric-packet').innerText = "Pulse: " + payload.state + " -> " + payload.wci + " WCI";
 
             const tbody = document.getElementById('streamTableBody');
             const row = document.createElement('tr');
             row.className = "bg-blue-950/10 border-b border-slate-800/40 transition-colors hover:bg-slate-800/30";
-            row.innerHTML = \`
-                <td class="py-2.5 font-mono text-slate-500">\${payload.timestamp}</td>
-                <td class="py-2.5 font-bold text-white">\${payload.state} <span class="text-[10px] font-normal text-slate-400">(\${payload.nodeName})</span></td>
-                <td class="py-2.5 font-mono font-bold \${payload.wci > 60 ? 'text-rose-400':'text-emerald-400'}">\${payload.wci}</td>
-                <td class="py-2.5 font-mono text-blue-400">\${payload.turbidity}</td>
-            \`;
+            row.innerHTML = ' +
+                '<td class="py-2.5 font-mono text-slate-500">' + payload.timestamp + '</td>' +
+                '<td class="py-2.5 font-bold text-white">' + payload.state + ' <span class="text-[10px] font-normal text-slate-400">(' + payload.nodeName + ')</span></td>' +
+                '<td class="py-2.5 font-mono font-bold ' + (payload.wci > 60 ? 'text-rose-400':'text-emerald-400') + '">' + payload.wci + '</td>' +
+                '<td class="py-2.5 font-mono text-blue-400">' + payload.turbidity + '</td>' +
+            '';
             tbody.insertBefore(row, tbody.firstChild);
 
             if (tbody.rows.length > 8) tbody.removeChild(tbody.lastChild);
 
             if(document.getElementById('stateSelector').value === payload.state) {
-                document.getElementById('metric-wci').innerText = \`\${payload.wci} / 100\`;
+                document.getElementById('metric-wci').innerText = payload.wci + " / 100";
             }
         });
 
@@ -279,10 +279,10 @@ const HTML_VIEWPORT = `
             const record = serverDatabase[state];
             if (!record) return;
 
-            document.getElementById('metric-wci').innerText = \`\${record.wci} / 100\`;
+            document.getElementById('metric-wci').innerText = record.wci + " / 100";
             document.getElementById('metric-cases').innerText = record.baseCases;
             
-            document.getElementById('googleMapIframe').src = \`https://maps.google.com/maps?q=\${record.q}&t=k&z=10&ie=UTF8&iwloc=&output=embed\`;
+            document.getElementById('googleMapIframe').src = "http://googleusercontent.com/maps.google.com/maps?q=" + record.q + "&t=k&z=10&ie=UTF8&iwloc=&output=embed";
 
             const alertBanner = document.getElementById('alertBanner');
             const statusMetric = document.getElementById('metric-status');
@@ -327,7 +327,9 @@ const HTML_VIEWPORT = `
                 const listContainer = document.getElementById('precautionList');
                 listContainer.innerHTML = "";
                 result.instructions.forEach(inst => {
-                    listContainer.innerHTML += \`<li>\${inst}</li>\`;
+                    const li = document.createElement('li');
+                    li.innerText = inst;
+                    listContainer.appendChild(li);
                 });
 
                 document.getElementById('precautionDisplay').classList.remove('hidden');
